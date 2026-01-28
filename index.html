@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Monthly Planner</title>
+
+<style>
+:root {
+  --pink: #ff006b;
+  --bg: #191919;
+  --card: #1e1e1e;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: white;
+}
+
+.wrapper {
+  padding: 20px;
+}
+
+/* HEADER */
+
+.planner-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-arrow {
+  background: none;
+  border: none;
+  color: var(--pink);
+  font-size: 30px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.month-label {
+  color: var(--pink);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.month-progress {
+  margin-top: 8px;
+  width: 220px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #333;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--pink);
+  width: 0%;
+}
+
+.progress-text {
+  margin-top: 4px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--pink);
+}
+
+/* GRID */
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.day-cell {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 8px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.day-number {
+  color: var(--pink);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* TASK */
+
+.task {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+  cursor: grab;
+}
+
+.task.dragging {
+  opacity: 0.4;
+}
+
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkbox {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--pink);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.checkbox.checked {
+  background: var(--pink);
+}
+
+.task input {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 12px;
+  width: 100%;
+}
+
+.task input:focus {
+  outline: none;
+}
+
+/* TAGS */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: black;
+}
+
+.add-tag {
+  font-size: 10px;
+  color: #777;
+  cursor: pointer;
+}
+
+/* TAG EDITOR */
+
+.tag-editor input {
+  width: 100%;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.color-picker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.color {
+  width: 16px;
+  height: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #444;
+}
+
+.hidden {
+  display: none;
+}
+
+/* DAILY PROGRESS */
+
+.day-progress {
+  margin-top: auto;
+}
+
+.day-progress-bar {
+  height: 4px;
+  background: #333;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.day-progress-fill {
+  height: 100%;
+  background: var(--pink);
+  width: 0%;
+}
+
+.day-progress-text {
+  font-size: 10px;
+  text-align: right;
+  color: var(--pink);
+}
+
+/* ADD TASK */
+
+.add-task {
+  font-size: 11px;
+  color: #777;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+
+<div class="planner-header">
+  <div class="month-nav">
+    <button class="nav-arrow" id="prevMonth">‹</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button class="nav-arrow" id="nextMonth">›</button>
+  </div>
+
+  <div class="month-progress">
+    <div class="progress-bar">
+      <div class="progress-fill" id="monthProgressFill"></div>
+    </div>
+    <div class="progress-text" id="monthProgressText">0%</div>
+  </div>
+</div>
+
+<div class="month-grid" id="monthGrid"></div>
+</div>
+
+<script>
+const TAG_COLORS = [
+  "#ff006b","#ff3b30","#ff9500","#ffd60a",
+  "#34c759","#64d2ff","#af52de","#000000","#ffffff"
+];
+
+let currentDate = new Date();
+let draggedTask = null;
+
+const keyForMonth = () =>
+  `planner-${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+
+const save = () => {
+  const data = {};
+  document.querySelectorAll(".day-cell").forEach(cell => {
+    const day = cell.dataset.day;
+    data[day] = [...cell.querySelectorAll(".task")].map(task => ({
+      text: task.querySelector("input").value,
+      checked: task.querySelector(".checkbox").classList.contains("checked"),
+      tags: [...task.querySelectorAll(".tag")].map(t => ({
+        text: t.textContent,
+        color: t.style.background
+      }))
+    }));
+  });
+  localStorage.setItem(keyForMonth(), JSON.stringify(data));
+};
+
+const load = () =>
+  JSON.parse(localStorage.getItem(keyForMonth()) || "{}");
+
+function renderMonth() {
+  const grid = document.getElementById("monthGrid");
+  grid.innerHTML = "";
+
+  document.getElementById("monthLabel").textContent =
+    currentDate.toLocaleDateString("en-US",{month:"long",year:"numeric"});
+
+  const saved = load();
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const start = (new Date(year,month,1).getDay()+6)%7;
+  const days = new Date(year,month+1,0).getDate();
+
+  for(let i=0;i<start;i++) grid.appendChild(document.createElement("div"));
+
+  for(let d=1;d<=days;d++){
+    const cell = document.createElement("div");
+    cell.className = "day-cell";
+    cell.dataset.day = d;
+
+    cell.ondragover = e => e.preventDefault();
+    cell.ondrop = () => {
+      cell.querySelector(".tasks").appendChild(draggedTask);
+      save(); updateAll();
+    };
+
+    cell.innerHTML = `<div class="day-number">${d}</div>`;
+    const tasks = document.createElement("div");
+    tasks.className = "tasks";
+
+    (saved[d]||[]).forEach(t => tasks.appendChild(createTask(cell,t)));
+
+    const add = document.createElement("div");
+    add.className="add-task";
+    add.textContent="+ add task";
+    add.onclick=()=>{tasks.appendChild(createTask(cell));save();updateAll();};
+
+    const prog = document.createElement("div");
+    prog.className="day-progress";
+    prog.innerHTML=`<div class="day-progress-bar"><div class="day-progress-fill"></div></div><div class="day-progress-text">0%</div>`;
+
+    cell.append(tasks,add,prog);
+    grid.appendChild(cell);
+  }
+  updateAll();
+}
+
+function createTask(dayCell,data={}) {
+  const task=document.createElement("div");
+  task.className="task";
+  task.draggable=true;
+  task.ondragstart=()=>{draggedTask=task;task.classList.add("dragging")};
+  task.ondragend=()=>task.classList.remove("dragging");
+
+  const row=document.createElement("div");
+  row.className="task-row";
+
+  const cb=document.createElement("div");
+  cb.className="checkbox"+(data.checked?" checked":"");
+  cb.onclick=()=>{cb.classList.toggle("checked");save();updateAll();};
+
+  const input=document.createElement("input");
+  input.value=data.text||"";
+  input.oninput=save;
+
+  row.append(cb,input);
+
+  const tags=document.createElement("div");
+  tags.className="tags";
+  (data.tags||[]).forEach(t=>{
+    const tg=document.createElement("div");
+    tg.className="tag";
+    tg.textContent=t.text;
+    tg.style.background=t.color;
+    tags.appendChild(tg);
+  });
+
+  const addTag=document.createElement("div");
+  addTag.className="add-tag";
+  addTag.textContent="+ tag";
+
+  const editor=document.createElement("div");
+  editor.className="hidden";
+
+  const ti=document.createElement("input");
+  const picker=document.createElement("div");
+  picker.className="color-picker";
+
+  TAG_COLORS.forEach(c=>{
+    const col=document.createElement("div");
+    col.className="color";
+    col.style.background=c;
+    col.onclick=()=>{
+      if(!ti.value)return;
+      const tg=document.createElement("div");
+      tg.className="tag";
+      tg.textContent=ti.value;
+      tg.style.background=c;
+      tags.appendChild(tg);
+      ti.value="";editor.classList.add("hidden");save();
+    };
+    picker.appendChild(col);
+  });
+
+  addTag.onclick=()=>editor.classList.toggle("hidden");
+  editor.append(ti,picker);
+
+  task.append(row,tags,addTag,editor);
+  return task;
+}
+
+function updateAll(){
+  document.querySelectorAll(".day-cell").forEach(c=>{
+    const b=c.querySelectorAll(".checkbox");
+    const d=c.querySelectorAll(".checkbox.checked");
+    const p=b.length?Math.round(d.length/b.length*100):0;
+    c.querySelector(".day-progress-fill").style.width=p+"%";
+    c.querySelector(".day-progress-text").textContent=p+"%";
+  });
+
+  const all=document.querySelectorAll(".checkbox").length;
+  const done=document.querySelectorAll(".checkbox.checked").length;
+  const m=all?Math.round(done/all*100):0;
+  document.getElementById("monthProgressFill").style.width=m+"%";
+  document.getElementById("monthProgressText").textContent=m+"%";
+}
+
+document.getElementById("prevMonth").onclick=()=>{currentDate.setMonth(currentDate.getMonth()-1);renderMonth()};
+document.getElementById("nextMonth").onclick=()=>{currentDate.setMonth(currentDate.getMonth()+1);renderMonth()};
+
+renderMonth();
+</script>
+</body>
+</html>
