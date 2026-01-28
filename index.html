@@ -359,8 +359,18 @@ function createTask(dayCell,data={}) {
   const task=document.createElement("div");
   task.className="task";
   task.draggable=true;
+
   task.ondragstart=()=>{draggedTask=task;task.classList.add("dragging")};
   task.ondragend=()=>task.classList.remove("dragging");
+
+  /* DELETE TASK */
+  const del=document.createElement("div");
+  del.className="delete-task";
+  del.textContent="×";
+  del.onclick=()=>{
+    task.remove();
+    save(); updateAll();
+  };
 
   const row=document.createElement("div");
   row.className="task-row";
@@ -377,11 +387,19 @@ function createTask(dayCell,data={}) {
 
   const tags=document.createElement("div");
   tags.className="tags";
+
   (data.tags||[]).forEach(t=>{
     const tg=document.createElement("div");
     tg.className="tag";
     tg.textContent=t.text;
     tg.style.background=t.color;
+
+    /* DELETE TAG */
+    tg.onclick=()=>{
+      tg.remove();
+      save();
+    };
+
     tags.appendChild(tg);
   });
 
@@ -406,8 +424,16 @@ function createTask(dayCell,data={}) {
       tg.className="tag";
       tg.textContent=ti.value;
       tg.style.background=c;
+
+      tg.onclick=()=>{
+        tg.remove();
+        save();
+      };
+
       tags.appendChild(tg);
-      ti.value="";editor.classList.add("hidden");save();
+      ti.value="";
+      editor.classList.add("hidden");
+      save();
     };
     picker.appendChild(col);
   });
@@ -415,7 +441,7 @@ function createTask(dayCell,data={}) {
   addTag.onclick=()=>editor.classList.toggle("hidden");
   editor.append(ti,picker);
 
-  task.append(row,tags,addTag,editor);
+  task.append(del,row,tags,addTag,editor);
   return task;
 }
 
