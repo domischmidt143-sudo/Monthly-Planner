@@ -171,15 +171,20 @@ body {
   background: var(--pink);
 }
 
-.task input {
+.task textarea{
   background: none;
   border: none;
   color: white;
   font-size: 12px;
   width: 100%;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.task input:focus {
+.task textarea:focus{
   outline: none;
 }
 
@@ -426,10 +431,14 @@ function createTask(dayCell,data={}) {
   updateAll();
 };
 
-  const input=document.createElement("input");
-  input.value=data.text||"";
-  input.oninput=save;
-
+  const input=document.createElement("textarea");
+input.value=data.text||"";
+input.oninput=()=>{
+  input.style.height="auto";
+  input.style.height=input.scrollHeight+"px";
+  save();
+};
+  
   row.append(cb,input);
 
   const tags=document.createElement("div");
