@@ -153,7 +153,7 @@ body {
   opacity: 0.4;
 }
 
-.task-row {
+.task-row{
   display: flex;
   align-items: center;
   gap: 6px;
@@ -180,6 +180,15 @@ body {
   resize: none;
   overflow: hidden;
   line-height: 1.4;
+
+  /* KLUCZOWE */
+  height: 1.4em;
+  min-height: 1.4em;
+  max-height: 6em;
+
+  display: flex;
+  align-items: center;
+
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -433,9 +442,16 @@ function createTask(dayCell,data={}) {
 
   const input=document.createElement("textarea");
 input.value=data.text||"";
+
+const autoResize = () => {
+  input.style.height = "1.4em";
+  input.style.height = input.scrollHeight + "px";
+};
+
+autoResize();
+
 input.oninput=()=>{
-  input.style.height="auto";
-  input.style.height=input.scrollHeight+"px";
+  autoResize();
   save();
 };
   
