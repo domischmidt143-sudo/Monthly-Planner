@@ -350,18 +350,7 @@ function renderMonth() {
       save(); updateAll();
     };
 
-    const today=new Date()
-
-const isToday =
-  d===today.getDate() &&
-  m===today.getMonth() &&
-  y===today.getFullYear()
-
-day.innerHTML=`
-  <div class="day-number ${isToday?"today":""}">
-    ${d}
-  </div>
-  
+    cell.innerHTML = `<div class="day-number">${d}</div>`;
     const tasks = document.createElement("div");
     tasks.className = "tasks";
 
