@@ -183,6 +183,13 @@ body {
   outline: none;
 }
 
+.task.done input{
+  text-decoration: line-through;
+  text-decoration-color: var(--pink);
+  text-decoration-thickness: 2px;
+  opacity: 0.85;
+}
+
 /* TAGS */
 
 .tags {
@@ -407,7 +414,17 @@ function createTask(dayCell,data={}) {
 
   const cb=document.createElement("div");
   cb.className="checkbox"+(data.checked?" checked":"");
-  cb.onclick=()=>{cb.classList.toggle("checked");save();updateAll();};
+
+  if(data.checked){
+  task.classList.add("done");
+}
+  
+  cb.onclick=()=>{
+  cb.classList.toggle("checked");
+  task.classList.toggle("done", cb.classList.contains("checked"));
+  save();
+  updateAll();
+};
 
   const input=document.createElement("input");
   input.value=data.text||"";
