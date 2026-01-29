@@ -105,6 +105,18 @@ body {
   margin-bottom: 6px;
 }
 
+.day-number.today{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:26px;
+  height:26px;
+  background:#ff006b;
+  color:#0000;
+  border-radius:6px;
+  font-weight:700;
+}
+
 /* TASK */
 
 .task {
@@ -338,7 +350,18 @@ function renderMonth() {
       save(); updateAll();
     };
 
-    cell.innerHTML = `<div class="day-number">${d}</div>`;
+    const today=new Date()
+
+const isToday =
+  d===today.getDate() &&
+  m===today.getMonth() &&
+  y===today.getFullYear()
+
+day.innerHTML=`
+  <div class="day-number ${isToday?"today":""}">
+    ${d}
+  </div>
+  
     const tasks = document.createElement("div");
     tasks.className = "tasks";
 
