@@ -93,9 +93,25 @@ body {
   background: var(--card);
   border-radius: 14px;
   padding: 8px;
-  min-height: 150px;
+  height: 220px;          /* STAŁA wysokość */
   display: flex;
   flex-direction: column;
+  overflow: hidden;       /* nic nie wypycha karty */
+}
+
+  .tasks {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+  .tasks::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tasks::-webkit-scrollbar-thumb {
+  background: #ff006b;
+  border-radius: 999px;
 }
 
 .day-number {
